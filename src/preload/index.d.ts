@@ -1,8 +1,8 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
-
+export interface ConverterAPI {
+  selectFiles(): Promise<string[]>
+}
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    api: ConverterAPI
   }
 }
