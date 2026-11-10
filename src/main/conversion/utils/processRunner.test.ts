@@ -52,3 +52,60 @@ test('rejects when a process exceeds its timeout', async () => {
 test('rejects invalid timeout values', async () => {
   await assert.rejects(runProcess(process.execPath, ['--version'], { timeoutMs: -100 }), RangeError)
 })
+
+test('rejects when stdout exceeds the output limit', async () => {
+  await assert.rejects(
+    runProcess(process.execPath, ['-e', 'process.stdout.write("x".repeat(4096))'], {
+      maxOutputBytes: 1024
+    }),
+    /Process output exceeded/
+  )
+})
+
+test('rejects when stderr exceeds the output limit', async () => {
+  await assert.rejects(
+    runProcess(process.execPath, ['-e', 'process.stderr.write("x".repeat(4096))'], {
+      maxOutputBytes: 1024
+    }),
+    /Process output exceeded/
+  )
+})
+
+test('rejects when combined output exceeds the limit', async () => {
+  await assert.rejects(
+    runProcess(
+      process.execPath,
+      ['-e', 'process.stdout.write("a".repeat(700)); ' + 'process.stderr.write("b".repeat(700))'],
+      { maxOutputBytes: 1024 }
+    ),
+    /Process output exceeded/
+  )
+})
+
+test('rejects invalid output limits', async () => {
+  await assert.rejects(
+    runProcess(process.execPath, ['--version'], { maxOutputBytes: 0 }),
+    RangeError
+  )
+})
+
+test('rejects invalid termination grace periods', async () => {
+  await assert.rejects(runProcess(process.execPath, ['--version'], { killGraceMs: -1 }), RangeError)
+})
+
+test('waits for child process closure after timeout', async () => {
+  const startedAt = performance.now()
+
+  await assert.rejects(
+    runProcess(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+      timeoutMs: 500,
+      killGraceMs: 1000
+    }),
+    /Process timed out/
+  )
+
+  const elapsed = performance.now() - startedAt
+
+  // The timeout must have elapsed before rejection.
+  assert.ok(elapsed >= 450, `Process rejected too early: ${elapsed}ms`)
+})
