@@ -1,5 +1,5 @@
 import type { ConversionEngine } from '../types'
-import { spawn } from 'node:child_process'
+import { findLibreOfficeExecutable } from '../utils/libre-officeDiscovery'
 
 import type {
   ConversionRequest,
@@ -10,23 +10,19 @@ import type {
 export class LibreOfficeEngine implements ConversionEngine {
   readonly id = 'libre-office'
 
-  // TODO: Add a timeout mechanism too
-  // NOTE: Windows might not find the libreoffice executable if it's not in the PATH.
-  isAvailable(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      const child = spawn('soffice', ['--version'])
+  private executablePath: string | null = null
 
-      child.on('error', () => resolve(false))
-      child.on('close', (code) => resolve(code === 0))
-    })
+  async isAvailable(): Promise<boolean> {
+    this.executablePath = await findLibreOfficeExecutable()
+
+    return this.executablePath !== null
   }
 
   supports(source: SupportedFormat, target: SupportedFormat): boolean {
     return source === 'docx' && target === 'pdf'
   }
 
-  async convert(request: ConversionRequest): Promise<ConversionResult> {
-    // TODO: implement conversion
+  async convert(_request: ConversionRequest): Promise<ConversionResult> {
     throw new Error('LibreOffice conversion not implemented yet')
   }
 }
