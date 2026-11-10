@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -93,6 +93,30 @@ test('rejects a missing input file', async () => {
         supports
       ),
       { code: 'ENOENT' }
+    )
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('rejects a directory as input', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+  try {
+    const inputPath = path.join(dir, 'example.docx')
+
+    await mkdir(inputPath)
+
+    await assert.rejects(
+      validateConversionRequest(
+        {
+          inputPath,
+          outputDirectory: dir,
+          targetFormat: 'pdf'
+        },
+        supports
+      ),
+      /not a valid file/
     )
   } finally {
     await rm(dir, { recursive: true, force: true })
