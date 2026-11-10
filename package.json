@@ -24,7 +24,8 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@tailwindcss/vite": "^4.3.5",
-    "tailwindcss": "^4.3.5"
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.1",

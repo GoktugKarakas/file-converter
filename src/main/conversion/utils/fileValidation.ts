@@ -20,7 +20,6 @@ export async function validateConversionRequest(
   }
 
   const outputPath = path.join(outputDirectory, `${path.parse(inputPath).name}.${targetFormat}`)
-
   try {
     await stat(outputPath)
     throw new Error(`Output file ${outputPath} already exists.`)
