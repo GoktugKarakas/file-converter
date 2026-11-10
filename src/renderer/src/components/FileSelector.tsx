@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import fileUploadIcon from '../assets/file-upload.svg'
 
+//TODO : add another svg for selected file count also polish the ui
+
 export default function FileSelector(): React.JSX.Element {
   const [files, setFiles] = useState<string[]>([])
 

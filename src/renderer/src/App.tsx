@@ -1,4 +1,4 @@
-import FileSelector from './components/fileSelector'
+import FileSelector from './components/FileSelector'
 
 export default function App(): React.JSX.Element {
   return (
