@@ -24,9 +24,10 @@ export class LibreOfficeEngine implements ConversionEngine {
   }
 
   async convert(request: ConversionRequest): Promise<ConversionResult> {
-    const outputPath = await validateConversionRequest(request, (source, target) =>
-      this.supports(source, target)
-    )
+    // const outputPath = await validateConversionRequest(request, (source, target) =>
+    //   this.supports(source, target)
+    // )
+    await validateConversionRequest(request, (source, target) => this.supports(source, target))
 
     throw new Error('LibreOffice conversion not implemented yet')
   }
