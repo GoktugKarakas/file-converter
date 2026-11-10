@@ -1,9 +1,9 @@
-import Test from './components/test'
+import FileSelector from './components/fileSelector'
 
 export default function App(): React.JSX.Element {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-      <Test />
+    <main className="flex min-h-screen items-center justify-center bg-gray-700">
+      <FileSelector />
     </main>
   )
 }
