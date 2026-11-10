@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import fileUploadIcon from '../assets/file-upload.svg'
 
 export default function FileSelector(): React.JSX.Element {
   const [files, setFiles] = useState<string[]>([])
 
-  async function handleClick(): Promise<void> {
+  async function handleSelectFiles(): Promise<void> {
     const selectedFiles = await window.api.selectFiles()
 
     if (selectedFiles.length > 0) {
@@ -12,27 +13,24 @@ export default function FileSelector(): React.JSX.Element {
   }
 
   return (
-    <div className="p-6">
+    <div className="flex flex-col items-center gap-4 p-8">
+      <img src={fileUploadIcon} alt="" className="h-20 w-20 dark:invert" />
+      <h2 className="text-xl font-semibold">Select Files</h2>
+      <p className="text-sm">Choose one or more files:</p>
+
       <button
-        onClick={handleClick}
+        type="button"
+        onClick={handleSelectFiles}
         className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
       >
-        Select Files
+        Browse Files
       </button>
 
-      <h2 className="mt-6 font-semibold">Selected Files ({files.length})</h2>
-
-      {files.length === 0 ? (
-        <p>No files selected.</p>
-      ) : (
-        <ul className="mt-2 space-y-2">
-          {files.map((file) => (
-            <li key={file} className="rounded border p-2">
-              {file}
-            </li>
-          ))}
-        </ul>
-      )}
+      <p className="text-sm font-medium">
+        {files.length === 0
+          ? 'No files selected'
+          : `${files.length} file${files.length === 1 ? '' : 's'} selected`}
+      </p>
     </div>
   )
 }
