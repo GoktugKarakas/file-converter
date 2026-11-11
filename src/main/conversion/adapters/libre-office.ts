@@ -8,6 +8,13 @@ import type {
   SupportedFormat
 } from '../../../shared/conversion'
 
+// TODO: Add support for other format capabilities in the future
+const conversionTargets = {
+  docx: ['pdf'],
+  pptx: ['pdf'],
+  xlsx: ['pdf']
+} as const satisfies Partial<Record<SupportedFormat, readonly SupportedFormat[]>>
+
 export class LibreOfficeEngine implements ConversionEngine {
   readonly id = 'libre-office'
 
@@ -20,7 +27,9 @@ export class LibreOfficeEngine implements ConversionEngine {
   }
 
   supports(source: SupportedFormat, target: SupportedFormat): boolean {
-    return source === 'docx' && target === 'pdf'
+    const targets: readonly SupportedFormat[] =
+      conversionTargets[source as keyof typeof conversionTargets] ?? []
+    return targets.includes(target)
   }
 
   async convert(request: ConversionRequest): Promise<ConversionResult> {

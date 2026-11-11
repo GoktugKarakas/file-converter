@@ -1,9 +1,8 @@
-export type SupportedFormat = 'docx' | 'pdf' //TODO: add other formats
-
+export type SupportedFormat = 'docx' | 'pdf' | 'xlsx' | 'pptx'
 export interface ConversionRequest {
   inputPath: string
   outputDirectory: string
-  targetFormat: 'pdf' // TODO: add support for other formats
+  targetFormat: SupportedFormat
 }
 
 export interface ConversionResult {
