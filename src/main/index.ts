@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron' // Note : add ipcMain back inside
+import { app, BrowserWindow } from 'electron' // Note : add ipcMain back inside
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerFileHandlers } from './ipc/files'
@@ -22,8 +22,9 @@ function createWindow(): void {
     mainWindow.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+  // TODO: When implementing Url to mp4/mp3 conversions, refactor this function
+  // implement an allowlist of urls
+  mainWindow.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' }
   })
 
