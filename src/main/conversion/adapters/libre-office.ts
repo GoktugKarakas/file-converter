@@ -2,7 +2,8 @@ import type { ConversionEngine } from '../types'
 import { findLibreOfficeExecutable } from '../utils/libre-officeDiscovery'
 import { validateConversionRequest } from '../utils/fileValidation'
 import { runProcess } from '../utils/processRunner'
-import { mkdtemp, rm, stat, link } from 'node:fs/promises'
+import { publishOutput } from '../utils/outputPublishing'
+import { mkdtemp, rm } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import path from 'node:path'
 
@@ -24,6 +25,30 @@ export class LibreOfficeEngine implements ConversionEngine {
 
   private executablePath: string | null = null
 
+  private async getExecutablePath(): Promise<string> {
+    const executable = this.executablePath ?? (await findLibreOfficeExecutable())
+    if (!executable) {
+      throw new Error(
+        'LibreOffice executable not found. Please ensure LibreOffice is installed and accessible in your system PATH.'
+      )
+    }
+    this.executablePath = executable
+    return executable
+  }
+
+  private buildArguments(request: ConversionRequest, workspace: string): string[] {
+    const profilePath = path.join(workspace, 'profile')
+    return [
+      `-env:UserInstallation=${pathToFileURL(profilePath).href}`,
+      '--headless',
+      '--convert-to',
+      request.targetFormat,
+      '--outdir',
+      workspace,
+      path.resolve(request.inputPath)
+    ]
+  }
+
   async isAvailable(): Promise<boolean> {
     this.executablePath = await findLibreOfficeExecutable()
 
@@ -41,48 +66,18 @@ export class LibreOfficeEngine implements ConversionEngine {
       this.supports(source, target)
     )
 
-    const executable = this.executablePath ?? (await findLibreOfficeExecutable())
-    if (!executable) {
-      throw new Error(
-        'LibreOffice executable not found. Please ensure LibreOffice is installed and accessible in your system PATH.'
-      )
-    }
-    this.executablePath = executable
-
-    // Temp buffer file
+    const executable = await this.getExecutablePath()
     const workspace = await mkdtemp(path.join(request.outputDirectory, '.converter-'))
 
     try {
       const tempOutputPath = path.join(workspace, path.basename(outputPath))
+      const args = this.buildArguments(request, workspace)
 
-      // libre-office cli command
-      const args = [
-        '--headless',
-        '--convert-to',
-        request.targetFormat,
-        '--outdir',
-        workspace,
-        path.resolve(request.inputPath)
-      ]
+      await runProcess(executable, args, {
+        timeoutMs: 120_000
+      })
 
-      const profilePath = path.join(workspace, 'profile')
-      args.unshift(`-env:UserInstallation=${pathToFileURL(profilePath).href}`)
-
-      await runProcess(executable, args, { timeoutMs: 120_000 })
-
-      const outputStats = await stat(tempOutputPath)
-      if (!outputStats.isFile() || outputStats.size === 0) {
-        throw new Error('LibreOffice produced an invalid output file.')
-      }
-
-      try {
-        await link(tempOutputPath, outputPath)
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
-          throw new Error(`Output already exists: ${outputPath}`, { cause: err })
-        }
-        throw err
-      }
+      await publishOutput(tempOutputPath, outputPath)
 
       return {
         inputPath: request.inputPath,
