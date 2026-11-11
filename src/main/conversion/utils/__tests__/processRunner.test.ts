@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { runProcess } from './processRunner'
+import { runProcess } from '../processRunner'
 
 // 1. Successful execution
 test('executes a process successfully', async () => {

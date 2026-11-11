@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
-import { validateConversionRequest } from './fileValidation'
+import { validateConversionRequest } from '../fileValidation'
 
 const supports = (source: string, target: string): boolean => source === 'docx' && target === 'pdf'
 
