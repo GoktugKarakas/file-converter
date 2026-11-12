@@ -48,8 +48,9 @@ export function runProcess(
     let settled = false
     let graceTimer: NodeJS.Timeout | undefined
 
-    const requestTermination = (error: Error): void => {
-      if (!child.pid) return
+    const terminateProcess = (force: boolean): void => {
+      const pid = child.pid
+      if (pid == undefined) return
 
       if (isWindows) {
         execFile(
@@ -65,11 +66,26 @@ export function runProcess(
         return
       }
       try {
-        process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM')
+        process.kill(-pid, force ? 'SIGKILL' : 'SIGTERM')
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== 'ESRCH') {
           child.kill(force ? 'SIGKILL' : 'SIGTERM')
         }
+      }
+    }
+
+    const requestTermination = (error: Error): void => {
+      if (settled || failure) return
+
+      failure = error
+      terminateProcess(false)
+
+      if (!isWindows) {
+        graceTimer = setTimeout(() => {
+          if (!settled) {
+            terminateProcess(true)
+          }
+        }, killGraceMs)
       }
     }
 
