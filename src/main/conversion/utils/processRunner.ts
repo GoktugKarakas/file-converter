@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process'
 import { execFile, spawn } from 'node:child_process'
 
 export interface ProcessResult {
@@ -50,17 +49,28 @@ export function runProcess(
     let graceTimer: NodeJS.Timeout | undefined
 
     const requestTermination = (error: Error): void => {
-      if (settled || failure) return
+      if (!child.pid) return
 
-      failure = error
-      // This may not terminate the entire process
-      child.kill('SIGTERM')
-
-      graceTimer = setTimeout(() => {
-        if (!settled) {
-          child.kill('SIGKILL')
+      if (isWindows) {
+        execFile(
+          'taskkill',
+          ['/PID', String(child.pid), '/T', '/F'],
+          { windowsHide: true, timeout: killGraceMs },
+          (error) => {
+            if (error && !settled) {
+              child.kill()
+            }
+          }
+        )
+        return
+      }
+      try {
+        process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM')
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ESRCH') {
+          child.kill(force ? 'SIGKILL' : 'SIGTERM')
         }
-      }, killGraceMs)
+      }
     }
 
     const collectOutput = (chunk: Buffer, destination: Buffer[]): void => {
