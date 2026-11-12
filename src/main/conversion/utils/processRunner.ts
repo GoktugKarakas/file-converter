@@ -50,7 +50,7 @@ export function runProcess(
       if (settled || failure) return
 
       failure = error
-
+      // This may not terminate the entire process
       child.kill('SIGTERM')
 
       graceTimer = setTimeout(() => {
