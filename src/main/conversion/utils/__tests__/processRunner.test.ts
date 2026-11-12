@@ -108,7 +108,15 @@ test('waits for child process closure after timeout', async () => {
   )
 
   const elapsed = performance.now() - startedAt
-
-  // The timeout must have elapsed before rejection.
   assert.ok(elapsed >= 450, `Process rejected too early: ${elapsed}ms`)
 })
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false
+    throw error
+  }
+}
