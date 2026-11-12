@@ -1,15 +1,15 @@
 import path from 'path'
 import { stat } from 'node:fs/promises'
 
-import type { ConversionRequest, SupportedFormat } from '../../../shared/conversion'
+import type { ConversionRequest } from '../../../shared/conversion'
 
 export async function validateConversionRequest(
   request: ConversionRequest,
-  supports: (source: SupportedFormat, target: SupportedFormat) => boolean
+  supports: (source: string, target: string) => boolean
 ): Promise<string> {
   const { inputPath, outputDirectory, targetFormat } = request
 
-  const sourceFormat = path.extname(inputPath).slice(1).toLowerCase() as SupportedFormat
+  const sourceFormat = path.extname(inputPath).slice(1).toLowerCase()
   if (!supports(sourceFormat, targetFormat)) {
     throw new Error(`Conversion from ${sourceFormat} to ${targetFormat} is not supported.`)
   }
