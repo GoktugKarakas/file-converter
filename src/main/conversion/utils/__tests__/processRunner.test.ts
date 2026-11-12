@@ -129,3 +129,43 @@ function killIfAlive(pid: number | undefined): void {
     if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
   }
 }
+
+test(
+  'timeout requests graceful termination with SIGTERM',
+  {
+    skip: process.platform === 'win32' ? 'POSIX signals only' : false
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'graceful-termination-'))
+    const signalFile = path.join(directory, 'signal.txt')
+    const pidFile = path.join(directory, 'pid.txt')
+    let pid: number | undefined
+
+    const script = `
+    const fs = require('node:fs')
+    process.on('SIGTERM', () => {
+      fs.writeFileSync(${JSON.stringify(signalFile)}, 'SIGTERM')
+      process.exit(0)
+    })
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    setInterval(() => {}, 1000)
+  `
+
+    try {
+      await assert.rejects(
+        runProcess(process.execPath, ['-e', script], {
+          timeoutMs: 800,
+          killGraceMs: 1500
+        }),
+        /Process timed out/
+      )
+
+      pid = Number(await readFile(pidFile, 'utf8'))
+      assert.equal(await readFile(signalFile, 'utf8'), 'SIGTERM')
+      assert.equal(isProcessAlive(pid), false, 'Child is still alive after completion')
+    } finally {
+      killIfAlive(pid)
+      await rm(directory, { recursive: true, force: true })
+    }
+  }
+)
