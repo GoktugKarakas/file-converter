@@ -120,3 +120,12 @@ function isProcessAlive(pid: number): boolean {
     throw error
   }
 }
+
+function killIfAlive(pid: number | undefined): void {
+  if (pid === undefined) return
+  try {
+    process.kill(pid, 'SIGKILL')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
+  }
+}
