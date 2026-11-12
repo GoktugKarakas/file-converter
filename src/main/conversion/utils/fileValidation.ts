@@ -37,7 +37,7 @@ export async function validateConversionRequest(
   }
   return outputPath
 }
-
+// This function is to be used in IPC handler
 export function isSupportedFormat(value: unknown): value is SupportedFormat {
   return typeof value === 'string' && SUPPORTED_FORMATS.some((format) => format === value)
 }
