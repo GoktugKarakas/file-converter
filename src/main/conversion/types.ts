@@ -4,6 +4,6 @@ export interface ConversionEngine {
   readonly id: string
 
   isAvailable(): Promise<boolean>
-  supports(source: SupportedFormat, target: SupportedFormat): boolean
+  supports(source: string, target: SupportedFormat): boolean
   convert(request: ConversionRequest): Promise<ConversionResult>
 }

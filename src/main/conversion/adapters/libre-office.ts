@@ -56,10 +56,12 @@ export class LibreOfficeEngine implements ConversionEngine {
     return this.executablePath !== null
   }
 
-  supports(source: SupportedFormat, target: SupportedFormat): boolean {
-    const targets: readonly SupportedFormat[] =
-      conversionTargets[source as keyof typeof conversionTargets] ?? []
-    return targets.includes(target)
+  supports(source: string, target: SupportedFormat): boolean {
+    if (!Object.hasOwn(conversionTargets, source)) {
+      return false
+    }
+    const targets = conversionTargets[source as keyof typeof conversionTargets]
+    return (targets as readonly SupportedFormat[]).includes(target)
   }
 
   async convert(request: ConversionRequest): Promise<ConversionResult> {
