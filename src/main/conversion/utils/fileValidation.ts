@@ -1,7 +1,8 @@
 import path from 'path'
 import { stat } from 'node:fs/promises'
+import { SUPPORTED_FORMATS, type SupportedFormat } from '../../../shared/conversion'
 
-import type { ConversionRequest, SupportedFormat } from '../../../shared/conversion'
+import type { ConversionRequest } from '../../../shared/conversion'
 
 export async function validateConversionRequest(
   request: ConversionRequest,
@@ -35,4 +36,8 @@ export async function validateConversionRequest(
     }
   }
   return outputPath
+}
+
+export function isSupportedFormat(value: unknown): value is SupportedFormat {
+  return typeof value === 'string' && SUPPORTED_FORMATS.some((format) => format === value)
 }
