@@ -1,11 +1,11 @@
 import path from 'path'
 import { stat } from 'node:fs/promises'
 
-import type { ConversionRequest } from '../../../shared/conversion'
+import type { ConversionRequest, SupportedFormat } from '../../../shared/conversion'
 
 export async function validateConversionRequest(
   request: ConversionRequest,
-  supports: (source: string, target: string) => boolean
+  supports: (source: string, target: SupportedFormat) => boolean
 ): Promise<string> {
   const { inputPath, outputDirectory, targetFormat } = request
 
