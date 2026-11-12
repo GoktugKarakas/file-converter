@@ -169,3 +169,41 @@ test(
     }
   }
 )
+
+test(
+  'timeout escalates to SIGKILL when SIGTERM is ignored',
+  {
+    skip: process.platform === 'win32' ? 'POSIX signals only' : false
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'forced-termination-'))
+    const pidFile = path.join(directory, 'pid.txt')
+    let pid: number | undefined
+
+    const script = `
+    const fs = require('node:fs')
+    process.on('SIGTERM', () => {}) // Intentionally ignore graceful shutdown.
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    setInterval(() => {}, 1000)
+  `
+
+    try {
+      const startedAt = performance.now()
+      await assert.rejects(
+        runProcess(process.execPath, ['-e', script], {
+          timeoutMs: 800,
+          killGraceMs: 400
+        }),
+        /Process timed out/
+      )
+      const elapsed = performance.now() - startedAt
+
+      pid = Number(await readFile(pidFile, 'utf8'))
+      assert.ok(elapsed >= 1050, `Escalation occurred too early: ${elapsed}ms`)
+      assert.equal(isProcessAlive(pid), false, 'SIGKILL did not terminate the child')
+    } finally {
+      killIfAlive(pid)
+      await rm(directory, { recursive: true, force: true })
+    }
+  }
+)
