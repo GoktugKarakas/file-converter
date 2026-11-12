@@ -154,3 +154,21 @@ test('rejects a missing output directory', async () => {
     await rm(dir, { recursive: true, force: true })
   }
 })
+
+test('rejects a regular file used as an output directory', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+  try {
+    const inputPath = path.join(dir, 'example.docx')
+    const outputDirectory = path.join(dir, 'not-a-directory')
+
+    await writeFile(inputPath, 'test content')
+    await writeFile(outputDirectory, 'ordinary file')
+
+    await assert.rejects(
+      validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports)
+    )
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
