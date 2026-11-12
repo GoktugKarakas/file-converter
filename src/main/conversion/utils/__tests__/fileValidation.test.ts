@@ -136,3 +136,21 @@ test('rejects an unknown source extension', async () => {
     /not supported/
   )
 })
+
+test('rejects a missing output directory', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+  try {
+    const inputPath = path.join(dir, 'example.docx')
+    const outputDirectory = path.join(dir, 'missing')
+
+    await writeFile(inputPath, 'test content')
+
+    await assert.rejects(
+      validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports),
+      { code: 'ENOENT' }
+    )
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
