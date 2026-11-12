@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 
 export interface ProcessResult {
   exitCode: number | null
@@ -19,6 +20,7 @@ export function runProcess(
   options: ProcessOptions = {}
 ): Promise<ProcessResult> {
   const { timeoutMs = 30_000, cwd, maxOutputBytes = 1024 * 1024, killGraceMs = 2000 } = options
+  const isWindows = process.platform === 'win32'
 
   for (const [name, value] of Object.entries({
     timeoutMs,
@@ -35,6 +37,7 @@ export function runProcess(
       cwd,
       windowsHide: true,
       shell: false,
+      detached: !isWindows,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
