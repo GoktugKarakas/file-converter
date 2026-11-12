@@ -30,10 +30,10 @@ describe('publishOutput', () => {
 
     await publishOutput(temporaryPath, finalPath)
 
-    assert(await readFile(finalPath, 'utf8'), 'converted content')
+    assert.equal(await readFile(finalPath, 'utf8'), 'converted content')
 
     // Publishing must not remove the original temporary file.
-    assert(await readFile(temporaryPath, 'utf8'), 'converted content')
+    assert.equal(await readFile(finalPath, 'utf8'), 'converted content')
   })
 
   it('rejects an existing destination without overwriting it', async () => {
