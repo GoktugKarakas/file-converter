@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { validateConversionRequest } from '../fileValidation'
+import { ConversionRequest } from '../../../../shared/conversion'
 
 const supports = (source: string, target: string): boolean => source === 'docx' && target === 'pdf'
 
@@ -121,4 +122,17 @@ test('rejects a directory as input', async () => {
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
+})
+
+test('rejects an unknown source extension', async () => {
+  const request: ConversionRequest = {
+    inputPath: '/some/path/document.exe',
+    outputDirectory: '/some/output',
+    targetFormat: 'pdf'
+  }
+
+  await assert.rejects(
+    validateConversionRequest(request, (source, target) => source === 'docx' && target === 'pdf'),
+    /not supported/
+  )
 })
