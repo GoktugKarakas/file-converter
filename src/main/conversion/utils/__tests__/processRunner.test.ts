@@ -207,3 +207,33 @@ test(
     }
   }
 )
+
+test('exceeding the output limit terminates the running process', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'output-termination-'))
+  const pidFile = path.join(directory, 'pid.txt')
+  let pid: number | undefined
+
+  const script = `
+    const fs = require('node:fs')
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    process.stdout.write('x'.repeat(8192))
+    setInterval(() => {}, 1000)
+  `
+
+  try {
+    await assert.rejects(
+      runProcess(process.execPath, ['-e', script], {
+        maxOutputBytes: 1024,
+        timeoutMs: 5000,
+        killGraceMs: 500
+      }),
+      /Process output exceeded 1024 bytes/
+    )
+
+    pid = Number(await readFile(pidFile, 'utf8'))
+    assert.equal(isProcessAlive(pid), false, 'Child remains alive after output failure')
+  } finally {
+    killIfAlive(pid)
+    await rm(directory, { recursive: true, force: true })
+  }
+})
