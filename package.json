@@ -19,7 +19,8 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
-    "test": "tsx --test src/main/conversion/utils/__tests__/*.test.ts"
+    "test": "tsx --test src/main/conversion/utils/__tests__/*.test.ts",
+    "test:integration": "tsx --test src/main/conversion/adapters/__tests__/*.integration.test.ts"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
