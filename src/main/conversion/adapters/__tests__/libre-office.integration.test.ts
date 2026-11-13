@@ -32,6 +32,7 @@ describe('LibreOfficeEngine integration', () => {
   afterEach(async () => {
     await rm(root, { recursive: true, force: true })
   })
+
   //Does successfully convert a Docx
   it('converts a DOCX into a nonempty PDF with correct result metadata', async (t) => {
     if (!available) return t.skip('LibreOffice is not installed or discoverable')
@@ -65,6 +66,7 @@ describe('LibreOfficeEngine integration', () => {
     assert.deepEqual(await readFile(destination), original)
     assert.deepEqual(await readdir(outputDirectory), ['sample.pdf'])
   })
+
   //Does it reject unsupported format
   it('rejects unsupported input without producing an output', async () => {
     const txtPath = path.join(root, 'notes.txt')
@@ -77,6 +79,7 @@ describe('LibreOfficeEngine integration', () => {
     )
     assert.deepEqual(await readdir(outputDirectory), [])
   })
+
   // Does it reject invalid file and clears buffer folder
   it('rejects invalid DOCX data and cleans up the temporary workspace', async (t) => {
     if (!available) return t.skip('LibreOffice is not installed or discoverable')
