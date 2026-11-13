@@ -50,4 +50,19 @@ describe('LibreOfficeEngine integration', () => {
     assert.equal(bytes.subarray(0, 5).toString('ascii'), '%PDF-')
     assert.deepEqual(await readdir(outputDirectory), ['sample.pdf'])
   })
+
+  //Does it refuse to overwrite an existing destination
+  it('refuses to overwrite an existing destination', async () => {
+    const destination = path.join(outputDirectory, 'sample.pdf')
+    const original = Buffer.from('preserve-existing-output')
+
+    await writeFile(destination, original)
+    await assert.rejects(
+      engine.convert({ inputPath, outputDirectory, targetFormat: 'pdf' }),
+
+      /already exists/
+    )
+    assert.deepEqual(await readFile(destination), original)
+    assert.deepEqual(await readdir(outputDirectory), ['sample.pdf'])
+  })
 })
