@@ -2,7 +2,52 @@ import path from 'node:path'
 import { tmpdir } from 'node:os'
 import assert from 'node:assert/strict'
 import { fileURLToPath } from 'node:url'
-import { before, beforeEach, describe, it } from 'node:test'
+import { afterEach, before, beforeEach, describe, it } from 'node:test'
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 
 import { LibreOfficeEngine } from '../libre-office'
+
+const fixture = fileURLToPath(new URL('./fixtures/sample.docx', import.meta.url))
+
+describe('LibreOfficeEngine integration', () => {
+  const engine = new LibreOfficeEngine()
+
+  let root: string
+  let inputPath: string
+  let outputDirectory: string
+  let available = false
+
+  before(async () => {
+    available = await engine.isAvailable()
+  })
+
+  beforeEach(async () => {
+    root = await mkdtemp(path.join(tmpdir(), 'lo-integration-'))
+    outputDirectory = path.join(root, 'output')
+    await mkdir(outputDirectory)
+    inputPath = path.join(root, 'sample.docx')
+    await copyFile(fixture, inputPath)
+  })
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true })
+  })
+  //Does successfully convert a Docx
+  it('converts a DOCX into a nonempty PDF with correct result metadata', async (t) => {
+    if (!available) return t.skip('LibreOffice is not installed or discoverable')
+    const result = await engine.convert({ inputPath, outputDirectory, targetFormat: 'pdf' })
+
+    const expectedOutputPath = path.join(outputDirectory, 'sample.pdf')
+
+    assert.deepEqual(result, {
+      inputPath,
+      outputPath: expectedOutputPath,
+      engine: 'libre-office'
+    })
+
+    const bytes = await readFile(expectedOutputPath)
+    assert.ok(bytes.length > 100)
+    assert.equal(bytes.subarray(0, 5).toString('ascii'), '%PDF-')
+    assert.deepEqual(await readdir(outputDirectory), ['sample.pdf'])
+  })
+})
