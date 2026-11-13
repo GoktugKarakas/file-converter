@@ -1,22 +1,22 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
-
+//TODO: revisit other operating systems path-finding of libre office
 function getExecutableCandidates(): string[] {
   switch (process.platform) {
     case 'win32':
       return [
-        'soffice.exe',
+        'soffice.com',
         path.join(
           process.env.PROGRAMFILES ?? 'C:\\Program Files',
           'LibreOffice',
           'program',
-          'soffice.exe'
+          'soffice.com'
         ),
         path.join(
           process.env['PROGRAMFILES(X86)'] ?? 'C:\\Program Files (x86)',
           'LibreOffice',
           'program',
-          'soffice.exe'
+          'soffice.com'
         )
       ]
 
@@ -45,12 +45,12 @@ function checkExecutable(executable: string): Promise<boolean> {
       child.kill()
     }, 5000)
 
-    child.on('error', () => {
+    child.once('error', () => {
       clearTimeout(timeout)
       resolve(false)
     })
 
-    child.on('close', (code) => {
+    child.once('close', (code) => {
       clearTimeout(timeout)
       resolve(!timedOut && code === 0)
     })
