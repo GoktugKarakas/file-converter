@@ -65,4 +65,16 @@ describe('LibreOfficeEngine integration', () => {
     assert.deepEqual(await readFile(destination), original)
     assert.deepEqual(await readdir(outputDirectory), ['sample.pdf'])
   })
+  //Does it reject unsupported format
+  it('rejects unsupported input without producing an output', async () => {
+    const txtPath = path.join(root, 'notes.txt')
+
+    await writeFile(txtPath, 'not supported')
+    await assert.rejects(
+      engine.convert({ inputPath: txtPath, outputDirectory, targetFormat: 'pdf' }),
+
+      /not supported/
+    )
+    assert.deepEqual(await readdir(outputDirectory), [])
+  })
 })
