@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -7,168 +7,171 @@ import path from 'node:path'
 import { validateConversionRequest } from '../fileValidation'
 import { ConversionRequest } from '../../../../shared/conversion'
 
-const supports = (source: string, target: string): boolean => source === 'docx' && target === 'pdf'
+describe('fileValidation', () => {
+  const supports = (source: string, target: string): boolean =>
+    source === 'docx' && target === 'pdf'
 
-test('accepts a valid DOCX to PDF request', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+  test('accepts a valid DOCX to PDF request', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
 
-  try {
-    const inputPath = path.join(dir, 'example.docx')
-    await writeFile(inputPath, 'test content')
+    try {
+      const inputPath = path.join(dir, 'example.docx')
+      await writeFile(inputPath, 'test content')
 
-    const result = await validateConversionRequest(
-      {
-        inputPath,
-        outputDirectory: dir,
-        targetFormat: 'pdf'
-      },
-      supports
-    )
-
-    assert.equal(result, path.join(dir, 'example.pdf'))
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
-
-test('rejects an existing PDF output', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
-
-  try {
-    const inputPath = path.join(dir, 'example.docx')
-    const outputPath = path.join(dir, 'example.pdf')
-
-    await writeFile(inputPath, 'test content')
-    await writeFile(outputPath, 'existing PDF')
-
-    await assert.rejects(
-      validateConversionRequest(
+      const result = await validateConversionRequest(
         {
           inputPath,
           outputDirectory: dir,
           targetFormat: 'pdf'
         },
         supports
-      ),
-      /Output file .* already exists/
-    )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
+      )
 
-test('rejects an unsupported conversion', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+      assert.equal(result, path.join(dir, 'example.pdf'))
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 
-  try {
-    const inputPath = path.join(dir, 'example.txt')
-    await writeFile(inputPath, 'test content')
+  test('rejects an existing PDF output', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+    try {
+      const inputPath = path.join(dir, 'example.docx')
+      const outputPath = path.join(dir, 'example.pdf')
+
+      await writeFile(inputPath, 'test content')
+      await writeFile(outputPath, 'existing PDF')
+
+      await assert.rejects(
+        validateConversionRequest(
+          {
+            inputPath,
+            outputDirectory: dir,
+            targetFormat: 'pdf'
+          },
+          supports
+        ),
+        /Output file .* already exists/
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('rejects an unsupported conversion', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+    try {
+      const inputPath = path.join(dir, 'example.txt')
+      await writeFile(inputPath, 'test content')
+
+      await assert.rejects(
+        validateConversionRequest(
+          {
+            inputPath,
+            outputDirectory: dir,
+            targetFormat: 'pdf'
+          },
+          supports
+        ),
+        /not supported/
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('rejects a missing input file', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+    try {
+      await assert.rejects(
+        validateConversionRequest(
+          {
+            inputPath: path.join(dir, 'missing.docx'),
+            outputDirectory: dir,
+            targetFormat: 'pdf'
+          },
+          supports
+        ),
+        { code: 'ENOENT' }
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('rejects a directory as input', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+
+    try {
+      const inputPath = path.join(dir, 'example.docx')
+
+      await mkdir(inputPath)
+
+      await assert.rejects(
+        validateConversionRequest(
+          {
+            inputPath,
+            outputDirectory: dir,
+            targetFormat: 'pdf'
+          },
+          supports
+        ),
+        /not a valid file/
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('rejects an unknown source extension', async () => {
+    const request: ConversionRequest = {
+      inputPath: '/some/path/document.exe',
+      outputDirectory: '/some/output',
+      targetFormat: 'pdf'
+    }
 
     await assert.rejects(
-      validateConversionRequest(
-        {
-          inputPath,
-          outputDirectory: dir,
-          targetFormat: 'pdf'
-        },
-        supports
-      ),
+      validateConversionRequest(request, (source, target) => source === 'docx' && target === 'pdf'),
       /not supported/
     )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
+  })
 
-test('rejects a missing input file', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+  test('rejects a missing output directory', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
 
-  try {
-    await assert.rejects(
-      validateConversionRequest(
-        {
-          inputPath: path.join(dir, 'missing.docx'),
-          outputDirectory: dir,
-          targetFormat: 'pdf'
-        },
-        supports
-      ),
-      { code: 'ENOENT' }
-    )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
+    try {
+      const inputPath = path.join(dir, 'example.docx')
+      const outputDirectory = path.join(dir, 'missing')
 
-test('rejects a directory as input', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
+      await writeFile(inputPath, 'test content')
 
-  try {
-    const inputPath = path.join(dir, 'example.docx')
+      await assert.rejects(
+        validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports),
+        { code: 'ENOENT' }
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 
-    await mkdir(inputPath)
+  test('rejects a regular file used as an output directory', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
 
-    await assert.rejects(
-      validateConversionRequest(
-        {
-          inputPath,
-          outputDirectory: dir,
-          targetFormat: 'pdf'
-        },
-        supports
-      ),
-      /not a valid file/
-    )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
+    try {
+      const inputPath = path.join(dir, 'example.docx')
+      const outputDirectory = path.join(dir, 'not-a-directory')
 
-test('rejects an unknown source extension', async () => {
-  const request: ConversionRequest = {
-    inputPath: '/some/path/document.exe',
-    outputDirectory: '/some/output',
-    targetFormat: 'pdf'
-  }
+      await writeFile(inputPath, 'test content')
+      await writeFile(outputDirectory, 'ordinary file')
 
-  await assert.rejects(
-    validateConversionRequest(request, (source, target) => source === 'docx' && target === 'pdf'),
-    /not supported/
-  )
-})
-
-test('rejects a missing output directory', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
-
-  try {
-    const inputPath = path.join(dir, 'example.docx')
-    const outputDirectory = path.join(dir, 'missing')
-
-    await writeFile(inputPath, 'test content')
-
-    await assert.rejects(
-      validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports),
-      { code: 'ENOENT' }
-    )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
-})
-
-test('rejects a regular file used as an output directory', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'converter-test-'))
-
-  try {
-    const inputPath = path.join(dir, 'example.docx')
-    const outputDirectory = path.join(dir, 'not-a-directory')
-
-    await writeFile(inputPath, 'test content')
-    await writeFile(outputDirectory, 'ordinary file')
-
-    await assert.rejects(
-      validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports)
-    )
-  } finally {
-    await rm(dir, { recursive: true, force: true })
-  }
+      await assert.rejects(
+        validateConversionRequest({ inputPath, outputDirectory, targetFormat: 'pdf' }, supports)
+      )
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 })
