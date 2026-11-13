@@ -30,10 +30,10 @@ describe('publishOutput', () => {
 
     await publishOutput(temporaryPath, finalPath)
 
-    assert(await readFile(finalPath, 'utf8'), 'converted content')
+    assert.equal(await readFile(finalPath, 'utf8'), 'converted content')
 
     // Publishing must not remove the original temporary file.
-    assert(await readFile(temporaryPath, 'utf8'), 'converted content')
+    assert.equal(await readFile(temporaryPath, 'utf8'), 'converted content')
   })
 
   it('rejects an existing destination without overwriting it', async () => {
@@ -42,7 +42,7 @@ describe('publishOutput', () => {
 
     await assert.rejects(publishOutput(temporaryPath, finalPath), /Output already exists/)
 
-    assert(await readFile(finalPath, 'utf8'), 'original content')
+    assert.equal(await readFile(finalPath, 'utf8'), 'original content')
   })
 
   it('rejects a missing temporary file', async () => {
@@ -82,7 +82,7 @@ describe('publishOutput', () => {
     assert.ok(['content A', 'content B'].includes(finalContent))
 
     // The losing source must not modify the winning output.
-    assert(await readFile(sourceA, 'utf8'), 'content A')
-    assert(await readFile(sourceB, 'utf8'), 'content B')
+    assert.equal(await readFile(sourceA, 'utf8'), 'content A')
+    assert.equal(await readFile(sourceB, 'utf8'), 'content B')
   })
 })

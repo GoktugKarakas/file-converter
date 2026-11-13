@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 
 export interface ProcessResult {
   exitCode: number | null
@@ -19,6 +19,7 @@ export function runProcess(
   options: ProcessOptions = {}
 ): Promise<ProcessResult> {
   const { timeoutMs = 30_000, cwd, maxOutputBytes = 1024 * 1024, killGraceMs = 2000 } = options
+  const isWindows = process.platform === 'win32'
 
   for (const [name, value] of Object.entries({
     timeoutMs,
@@ -35,6 +36,7 @@ export function runProcess(
       cwd,
       windowsHide: true,
       shell: false,
+      detached: !isWindows,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
@@ -46,18 +48,45 @@ export function runProcess(
     let settled = false
     let graceTimer: NodeJS.Timeout | undefined
 
+    const terminateProcess = (force: boolean): void => {
+      const pid = child.pid
+      if (pid == undefined) return
+
+      if (isWindows) {
+        execFile(
+          'taskkill',
+          ['/PID', String(child.pid), '/T', '/F'],
+          { windowsHide: true, timeout: killGraceMs },
+          (error) => {
+            if (error && !settled) {
+              child.kill()
+            }
+          }
+        )
+        return
+      }
+      try {
+        process.kill(-pid, force ? 'SIGKILL' : 'SIGTERM')
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ESRCH') {
+          child.kill(force ? 'SIGKILL' : 'SIGTERM')
+        }
+      }
+    }
+
     const requestTermination = (error: Error): void => {
       if (settled || failure) return
 
       failure = error
+      terminateProcess(false)
 
-      child.kill('SIGTERM')
-
-      graceTimer = setTimeout(() => {
-        if (!settled) {
-          child.kill('SIGKILL')
-        }
-      }, killGraceMs)
+      if (!isWindows) {
+        graceTimer = setTimeout(() => {
+          if (!settled) {
+            terminateProcess(true)
+          }
+        }, killGraceMs)
+      }
     }
 
     const collectOutput = (chunk: Buffer, destination: Buffer[]): void => {

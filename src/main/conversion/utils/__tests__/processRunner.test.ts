@@ -1,5 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 
 import { runProcess } from '../processRunner'
 
@@ -105,7 +108,132 @@ test('waits for child process closure after timeout', async () => {
   )
 
   const elapsed = performance.now() - startedAt
-
-  // The timeout must have elapsed before rejection.
   assert.ok(elapsed >= 450, `Process rejected too early: ${elapsed}ms`)
+})
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false
+    throw error
+  }
+}
+
+function killIfAlive(pid: number | undefined): void {
+  if (pid === undefined) return
+  try {
+    process.kill(pid, 'SIGKILL')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
+  }
+}
+
+test(
+  'timeout requests graceful termination with SIGTERM',
+  {
+    skip: process.platform === 'win32' ? 'POSIX signals only' : false
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'graceful-termination-'))
+    const signalFile = path.join(directory, 'signal.txt')
+    const pidFile = path.join(directory, 'pid.txt')
+    let pid: number | undefined
+
+    const script = `
+    const fs = require('node:fs')
+    process.on('SIGTERM', () => {
+      fs.writeFileSync(${JSON.stringify(signalFile)}, 'SIGTERM')
+      process.exit(0)
+    })
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    setInterval(() => {}, 1000)
+  `
+
+    try {
+      await assert.rejects(
+        runProcess(process.execPath, ['-e', script], {
+          timeoutMs: 800,
+          killGraceMs: 1500
+        }),
+        /Process timed out/
+      )
+
+      pid = Number(await readFile(pidFile, 'utf8'))
+      assert.equal(await readFile(signalFile, 'utf8'), 'SIGTERM')
+      assert.equal(isProcessAlive(pid), false, 'Child is still alive after completion')
+    } finally {
+      killIfAlive(pid)
+      await rm(directory, { recursive: true, force: true })
+    }
+  }
+)
+
+test(
+  'timeout escalates to SIGKILL when SIGTERM is ignored',
+  {
+    skip: process.platform === 'win32' ? 'POSIX signals only' : false
+  },
+  async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'forced-termination-'))
+    const pidFile = path.join(directory, 'pid.txt')
+    let pid: number | undefined
+
+    const script = `
+    const fs = require('node:fs')
+    process.on('SIGTERM', () => {}) // Intentionally ignore graceful shutdown.
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    setInterval(() => {}, 1000)
+  `
+
+    try {
+      const startedAt = performance.now()
+      await assert.rejects(
+        runProcess(process.execPath, ['-e', script], {
+          timeoutMs: 800,
+          killGraceMs: 400
+        }),
+        /Process timed out/
+      )
+      const elapsed = performance.now() - startedAt
+
+      pid = Number(await readFile(pidFile, 'utf8'))
+      assert.ok(elapsed >= 1050, `Escalation occurred too early: ${elapsed}ms`)
+      assert.equal(isProcessAlive(pid), false, 'SIGKILL did not terminate the child')
+    } finally {
+      killIfAlive(pid)
+      await rm(directory, { recursive: true, force: true })
+    }
+  }
+)
+
+test('exceeding the output limit terminates the running process', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'output-termination-'))
+  const pidFile = path.join(directory, 'pid.txt')
+  let pid: number | undefined
+
+  const script = `
+    const fs = require('node:fs')
+    fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid))
+    process.stdout.write('x'.repeat(8192))
+    setInterval(() => {}, 1000)
+  `
+
+  try {
+    await assert.rejects(
+      runProcess(process.execPath, ['-e', script], {
+        maxOutputBytes: 1024,
+        timeoutMs: 5000,
+        killGraceMs: 500
+      }),
+      /Process output exceeded 1024 bytes/
+    )
+
+    pid = Number(await readFile(pidFile, 'utf8'))
+    assert.equal(isProcessAlive(pid), false, 'Child remains alive after output failure')
+  } finally {
+    killIfAlive(pid)
+    await rm(directory, { recursive: true, force: true })
+  }
 })
