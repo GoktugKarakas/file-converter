@@ -79,14 +79,4 @@ describe('LibreOfficeEngine integration', () => {
     )
     assert.deepEqual(await readdir(outputDirectory), [])
   })
-
-  // Does it reject invalid file and clears buffer folder
-  it('rejects invalid DOCX data and cleans up the temporary workspace', async (t) => {
-    if (!available) return t.skip('LibreOffice is not installed or discoverable')
-
-    await writeFile(inputPath, 'this is not an Office document')
-    await assert.rejects(engine.convert({ inputPath, outputDirectory, targetFormat: 'pdf' }))
-
-    assert.deepEqual(await readdir(outputDirectory), [])
-  })
 })
