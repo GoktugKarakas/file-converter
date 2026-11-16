@@ -53,8 +53,6 @@ Communication between renderer and main process fallows this:
 
 Currently IPC integration is empty.
 
-## 3. Component Responsibilities
-
 ```mermaid
 flowchart TD
     R["Renderer (React)"]
@@ -80,6 +78,10 @@ flowchart TD
     classDef planned stroke-dasharray: 5 5
     class M,MS planned
 ```
+
+## 3. Component Responsibilities
+
+
 
 ## 4. Conversion Workflow
 
