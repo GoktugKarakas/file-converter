@@ -7,6 +7,7 @@ import { findLibreOfficeExecutable } from '../utils/libre-officeDiscovery'
 import { validateConversionRequest } from '../utils/fileValidation'
 import { runProcess } from '../utils/processRunner'
 import { publishOutput } from '../utils/outputPublishing'
+import type { Logger } from '../../../shared/logger'
 
 import type {
   ConversionRequest,
@@ -25,6 +26,8 @@ export class LibreOfficeEngine implements ConversionEngine {
   readonly id = 'libre-office'
 
   private executablePath: string | null = null
+
+  constructor(private readonly logger: Logger) {}
 
   private async getExecutablePath(): Promise<string> {
     const executable = this.executablePath ?? (await findLibreOfficeExecutable())
