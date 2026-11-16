@@ -55,6 +55,32 @@ Currently IPC integration is empty.
 
 ## 3. Component Responsibilities
 
+```mermaid
+flowchart TD
+    R["Renderer (React)"]
+    P["Preload API"]
+    IPC["Main IPC Handlers"]
+    M["Conversion Manager (planned)"]
+    E["ConversionEngine Interface"]
+    LO["LibreOffice Engine"]
+    MS["MS Office Engine (planned)"]
+    U["Conversion Utilities"]
+    S["Shared Contracts"]
+
+    R -->|"API calls"| P
+    P -->|"IPC requests"| IPC
+    IPC -.->|"Future conversion requests"| M
+    M -.->|"Selects and invokes"| E
+    LO -.->|"Implements"| E
+    MS -.->|"Will implement"| E
+    LO -->|"Uses"| U
+    E -->|"Uses types"| S
+    R -->|"Uses types"| S
+
+    classDef planned stroke-dasharray: 5 5
+    class M,MS planned
+```
+
 ## 4. Conversion Workflow
 
 ## 5. Design Constraints
