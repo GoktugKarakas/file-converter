@@ -136,6 +136,22 @@ Conversion manager shouldn't know how internal utility operations are performed.
 
 ## 4. Conversion Workflow
 
+Conversion system designed to execute individual conversion requests.
+
+Currently, only LibreOffice engine is implemented and batch processing is yet to get implemented.
+
+### 4.1 Conversion
+
+LibreOffice engine processes conversion requests in this sequence:
+
+1. **Validation:** Validate the request via supported formats, input conditions, and output destination.
+2. **Executable Discovery:** Locate LibreOffice executable path.
+3. **Workspace Creation:** Create a temporary workspace inside output directory.
+4. **Process Execution:** Construct LibreOffice cli commands to execute conversion.
+5. **Output Publishing:** Verify and publish the generated file.
+6. **Cleanup:** Remove the temporary workspace regardless of conversion succeeds.
+7. **Return Result:** Return a ConversionResult when conversion succeeds.
+
 ## 5. Design Constraints
 
 ## 6. Planned Architecture
