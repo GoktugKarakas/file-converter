@@ -152,6 +152,37 @@ LibreOffice engine processes conversion requests in this sequence:
 6. **Cleanup:** Remove the temporary workspace regardless of conversion succeeds.
 7. **Return Result:** Return a ConversionResult when conversion succeeds.
 
+```mermaid
+flowchart TD
+    A["convert(request)"]
+    B["Validate conversion request"]
+    C["Resolve LibreOffice executable"]
+    D["Create temporary workspace"]
+    E["Build conversion arguments"]
+    F["Execute LibreOffice via runProcess()"]
+    G["Verify and publish output"]
+    H["Clean up temporary workspace"]
+    I["Return ConversionResult"]
+    X["Propagate error"]
+
+    A --> B --> C --> D --> E --> F --> G
+    G --> H --> I
+
+    B & C & D & E & F & G -.->|"Failure"| X
+    X -.-> H
+
+    classDef error fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    class X error
+```
+
+### 4.2 Error Handling
+
+Individual conversion errors propagate to caller.
+
+Engine is responsible for cleaning up the temporary resources when execution or publishing fails.
+
+The planned conversion manager will handle these failures at the batch level according to the best-effort execution policy described in ADR-001.
+
 ## 5. Design Constraints
 
 ## 6. Planned Architecture
