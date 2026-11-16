@@ -98,6 +98,27 @@ Manager will flow _best-effort_ execution policy, {Independent failures doesn't 
 
 LibreOffice is the default preferred conversion engine, users would be able to configure preferred engine
 
+### 3.2 Conversion Engines
+
+Conversion engines are responsible for executing individual file conversions.
+
+Each engine implements ConversionEngine interface, providing common contract for availability checks and format compatibility.
+
+Interface defines three operations:
+
+- isAvailable(): Determines if conversion software available.
+- supports(): Determines if source and target combination is supported.
+- convert(): Processes the conversion request and produces the result.
+
+Each engine is responsible for validating requests, handling engine-specific failures, and managing temporary resources.
+
+Engines use shared utilities for file validation, process execution, and output publishing.
+
+#### Current implementations:
+
+- LibreOffice engine: Supports Docx, Pptx, and Xlsx to Pdf conversions.
+- Ms Office Engine: Planned, intended to provide additional conversion backend for windows.
+
 ## 4. Conversion Workflow
 
 ## 5. Design Constraints
