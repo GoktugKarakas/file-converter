@@ -254,3 +254,82 @@ Temporary conversion output must be verified before being published to its final
 Errors occurring during process execution, output publishing, or cleanup must be handled without incorrectly reporting a failed conversion as successful.
 
 ## 6. Planned Architecture
+
+This section describes planned components and integrations that are not yet implemented. These designs may evolve during development, provided they respect the established architectural constraints.
+
+### 6.1 Conversion Manager
+
+The conversion manager will coordinate batches of independent conversion requests.
+
+Planned functionality includes:
+
+- Selecting eligible engines according to availability, format compatibility, and user preferences.
+- Coordinating the execution of individual conversion requests.
+- Detecting and rejecting requests with conflicting output destinations.
+- Continuing unaffected conversions when individual operations fail.
+- Aggregating conversion outcomes into a batch-level result.
+- Reporting engine fallback information to the calling layer.
+
+The manager's execution model, including concurrency limits and cancellation behavior, has not yet been finalized.
+
+### 6.2 MS Office Engine
+
+A Windows-specific conversion engine is planned to provide an alternative to LibreOffice.
+
+The MS Office engine will implement the existing `ConversionEngine` interface and remain independently usable.
+
+LibreOffice will remain the default engine. MS Office will be selectable through application preferences when available and compatible.
+
+### 6.3 IPC Integration
+
+Conversion-related IPC communication will connect the renderer to the conversion manager through the preload API.
+
+The intended communication flow is:
+
+1. The renderer submits conversion requests through the exposed API.
+2. Preload forwards the requests through IPC.
+3. The main process validates the IPC request and delegates conversion orchestration to the manager.
+4. The manager coordinates conversion engines and collects results.
+5. The results are returned to the renderer for presentation.
+
+The renderer must not directly invoke conversion engines or access backend implementation details.
+
+### 6.4 Application Settings
+
+Application settings will allow users to select a preferred conversion engine.
+
+LibreOffice will be the default preference.
+
+If the preferred engine is unavailable or incompatible with a requested conversion, the manager will attempt to use another eligible engine.
+
+Fallback information will be communicated to the renderer so the user can be notified without modifying the saved preference.
+
+The storage mechanism and configuration interface have not yet been designed.
+
+### 6.5 Planned Component Integration
+
+```mermaid
+
+flowchart TD
+    UI["React Renderer"]
+    PRE["Preload API"]
+    IPC["Conversion IPC Handler"]
+    MAN["Conversion Manager"]
+    LO["LibreOffice Engine"]
+    MS["MS Office Engine"]
+    UTIL["Shared Utilities"]
+    SET["Engine Preferences"]
+
+    UI --> PRE
+    PRE --> IPC
+    IPC --> MAN
+    SET -.-> MAN
+
+    MAN --> LO
+    MAN --> MS
+
+    LO --> UTIL
+    MS --> UTIL
+```
+
+The diagram represents the intended dependencies, not the currently implemented conversion path.
