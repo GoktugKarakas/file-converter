@@ -153,26 +153,25 @@ LibreOffice engine processes conversion requests in this sequence:
 7. **Return Result:** Return a ConversionResult when conversion succeeds.
 
 ```mermaid
+
 flowchart TD
     A["convert(request)"]
-    B["Validate conversion request"]
+    B["Validate request"]
     C["Resolve LibreOffice executable"]
     D["Create temporary workspace"]
-    E["Build conversion arguments"]
-    F["Execute LibreOffice via runProcess()"]
-    G["Verify and publish output"]
-    H["Clean up temporary workspace"]
-    I["Return ConversionResult"]
+    E["Execute LibreOffice"]
+    F["Verify and publish output"]
+    G["Cleanup workspace"]
+    H["Return ConversionResult"]
     X["Propagate error"]
 
-    A --> B --> C --> D --> E --> F --> G
-    G --> H --> I
+    A --> B --> C --> D --> E --> F
+    F --> G --> H
 
-    B & C & D & E & F & G -.->|"Failure"| X
-    X -.-> H
+    B & C & D -.->|"Failure"| X
+    E & F -.->|"Failure"| G
+    G -.->|"Conversion failed"| X
 
-    classDef error fill:#fee2e2,stroke:#dc2626,color:#991b1b
-    class X error
 ```
 
 #### Temporary workspace location:
@@ -185,7 +184,9 @@ Individual conversion errors propagate to caller.
 
 Engine is responsible for cleaning up the temporary resources when execution or publishing fails.
 
-The planned conversion manager will handle these failures at the batch level according to the best-effort execution policy described in ADR-001.
+Temporary workspace cleanup is performed in a finally block after successful workspace creation. Failures occurring before workspace creation propagate directly without entering the workspace cleanup path.
+
+The planned conversion manager will handle these failures at the batch level according to the best-effort execution policy described in [ADR-001](decisions/001-batch-failure-policy.md).
 
 ## 5. Design Constraints
 
