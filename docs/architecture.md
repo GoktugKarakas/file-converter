@@ -175,6 +175,10 @@ flowchart TD
     class X error
 ```
 
+#### Temporary workspace location:
+
+The engine creates its temporary workspace inside the requested output directory to ensure that temporary and final output files reside on the same filesystem. This allows the output publishing utility to use hard links without copying file contents. Removing the temporary workspace afterward does not delete the published output because its directory entry remains linked to the underlying file.
+
 ### 4.2 Error Handling
 
 Individual conversion errors propagate to caller.
