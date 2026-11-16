@@ -7,6 +7,7 @@ import { findLibreOfficeExecutable } from '../utils/libre-officeDiscovery'
 import { validateConversionRequest } from '../utils/fileValidation'
 import { runProcess } from '../utils/processRunner'
 import { publishOutput } from '../utils/outputPublishing'
+import type { Logger } from '../../../shared/logger'
 
 import type {
   ConversionRequest,
@@ -15,6 +16,7 @@ import type {
 } from '../../../shared/conversion'
 
 // TODO: Add support for other format capabilities in the future
+// TODO: Change the loggers ownership.
 const conversionTargets = {
   docx: ['pdf'],
   pptx: ['pdf'],
@@ -25,6 +27,8 @@ export class LibreOfficeEngine implements ConversionEngine {
   readonly id = 'libre-office'
 
   private executablePath: string | null = null
+
+  constructor(private readonly logger: Logger) {}
 
   private async getExecutablePath(): Promise<string> {
     const executable = this.executablePath ?? (await findLibreOfficeExecutable())
@@ -68,6 +72,7 @@ export class LibreOfficeEngine implements ConversionEngine {
     const outputPath = await validateConversionRequest(request, (source, target) =>
       this.supports(source, target)
     )
+    this.logger.info('conversion.started', { engine: this.id, targetFormat: request.targetFormat })
 
     const executable = await this.getExecutablePath()
     const workspace = await mkdtemp(path.join(request.outputDirectory, '.converter-'))
@@ -79,8 +84,10 @@ export class LibreOfficeEngine implements ConversionEngine {
       await runProcess(executable, args, {
         timeoutMs: 120_000
       })
+      this.logger.debug('conversion.process.completed', { engine: this.id })
 
       await publishOutput(tempOutputPath, outputPath)
+      this.logger.info('conversion.completed', { engine: this.id, outputPath })
 
       return {
         inputPath: request.inputPath,

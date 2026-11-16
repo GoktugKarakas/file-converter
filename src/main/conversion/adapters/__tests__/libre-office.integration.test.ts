@@ -6,11 +6,20 @@ import { afterEach, before, beforeEach, describe, it } from 'node:test'
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 
 import { LibreOfficeEngine } from '../libre-office'
+import type { Logger } from '../../../../shared/logger'
 
 const fixture = fileURLToPath(new URL('./fixtures/sample.docx', import.meta.url))
+const events: string[] = []
+
+const testLogger: Logger = {
+  debug: (event) => events.push(event),
+  info: (event) => events.push(event),
+  warn: (event) => events.push(event),
+  error: (event) => events.push(event)
+}
 
 describe('LibreOfficeEngine integration', () => {
-  const engine = new LibreOfficeEngine()
+  const engine = new LibreOfficeEngine(testLogger)
 
   let root: string
   let inputPath: string
@@ -27,6 +36,7 @@ describe('LibreOfficeEngine integration', () => {
     await mkdir(outputDirectory)
     inputPath = path.join(root, 'sample.docx')
     await copyFile(fixture, inputPath)
+    events.length = 0
   })
 
   afterEach(async () => {
@@ -37,6 +47,8 @@ describe('LibreOfficeEngine integration', () => {
   it('converts a DOCX into a nonempty PDF with correct result metadata', async (t) => {
     if (!available) return t.skip('LibreOffice is not installed or discoverable')
     const result = await engine.convert({ inputPath, outputDirectory, targetFormat: 'pdf' })
+    assert.ok(events.includes('conversion.started'))
+    assert.ok(events.includes('conversion.completed'))
 
     const expectedOutputPath = path.join(outputDirectory, 'sample.pdf')
 
