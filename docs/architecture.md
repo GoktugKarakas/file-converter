@@ -81,7 +81,22 @@ flowchart TD
 
 ## 3. Component Responsibilities
 
+### 3.1 Conversion Manager (Planned)
 
+Conversion manager will coordinate requests and select appropriate engines.
+
+Responsibilities:
+
+- Managing batch conversions.
+- Selecting eligible engines depending on format support and availability.
+- Selecting the engine according to user settings.
+- Using Libre office as default engine
+- Coordinating conversions, results, failures
+- Producing batch result
+
+Manager will flow _best-effort_ execution policy, {Independent failures doesn't crash the process}
+
+LibreOffice is the default preferred conversion engine, users would be able to configure preferred engine
 
 ## 4. Conversion Workflow
 
