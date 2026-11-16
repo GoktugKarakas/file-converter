@@ -16,6 +16,7 @@ import type {
 } from '../../../shared/conversion'
 
 // TODO: Add support for other format capabilities in the future
+// TODO: Change the loggers ownership.
 const conversionTargets = {
   docx: ['pdf'],
   pptx: ['pdf'],
