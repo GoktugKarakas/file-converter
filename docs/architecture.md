@@ -189,4 +189,68 @@ The planned conversion manager will handle these failures at the batch level acc
 
 ## 5. Design Constraints
 
+The following constraints define the intended boundaries of the application. Future implementations and refactoring should preserve these properties unless an architectural decision explicitly changes them.
+
+### 5.1 Process Isolation
+
+The renderer must access privileged functionality through exposed preload APIs.
+
+The main process is responsible for validating and handling privileged requests received through IPC.
+
+Backend implementation details must not be directly exposed to the renderer.
+
+### 5.2 Separation of Responsibilities
+
+The conversion manager is responsible for orchestration, engine selection, and batch-level result handling.
+
+Conversion engines are responsible for executing and validating individual conversions.
+
+Shared utilities provide reusable operations without managing the overall conversion workflow.
+
+### 5.3 Engine Independence
+
+Conversion engines must remain usable independently of the conversion manager.
+
+Each engine must fulfill its own conversion contract, including request validation, resource cleanup, and failure reporting.
+
+Engines must not depend on user interface components or batch-level orchestration logic.
+
+### 5.4 Dependency Direction
+
+Lower-level utilities must not depend on the conversion engines or manager that consume them.
+
+Shared contracts should remain independent of backend implementation details.
+
+Dependencies should follow component responsibilities rather than introducing unnecessary coupling between unrelated modules.
+
+### 5.5 Failure Isolation
+
+A failure in an conversion must not terminate other independent conversions within a batch.
+
+The manager must preserve individual outcomes, including failures, and provide an aggregated result.
+
+Logging must not serve as the sole mechanism for reporting conversion outcomes.
+
+#### Batch Output Conflicts
+
+The conversion manager must detect requests within the same batch that resolve to an identical output destination.
+
+The manager follows a _reject-all-conflicting_ policy:
+
+- Every request involved in an output destination conflict is rejected.
+- Unrelated requests continue processing according to the best-effort execution policy.
+- The manager reports rejected requests individually as part of the batch result.
+- Individual engines remain responsible for validating their own conversion requests.
+- The output publishing utility independently enforces filesystem-level collision protection.
+
+Conflict detection must occur before executing the affected requests to prevent request ordering from determining the outcome.
+
+### 5.6 Resource Management
+
+Conversion engines are responsible for releasing temporary resources created during execution.
+
+Temporary conversion output must be verified before being published to its final destination.
+
+Errors occurring during process execution, output publishing, or cleanup must be handled without incorrectly reporting a failed conversion as successful.
+
 ## 6. Planned Architecture
