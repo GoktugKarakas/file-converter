@@ -119,6 +119,21 @@ Engines use shared utilities for file validation, process execution, and output 
 - LibreOffice engine: Supports Docx, Pptx, and Xlsx to Pdf conversions.
 - Ms Office Engine: Planned, intended to provide additional conversion backend for windows.
 
+### 3.3 Shared Utilities
+
+Conversion system uses shared utilities to provide reusable functionality and avoid duplicating logic.
+
+Utilities responsible for performing specific operations without managing overall conversion flow.
+
+Current utility layer consists of:
+
+- Process Runner: Executes and supervises external processes, including termination and output collection.
+- File Validation: Validates conversion requests.
+- Output Publishing: Publishes generated files to their final destinations.
+- LibreOffice Discovery: Locates and verifies LibreOffice.
+
+Conversion manager shouldn't know how internal utility operations are performed.
+
 ## 4. Conversion Workflow
 
 ## 5. Design Constraints
