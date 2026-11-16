@@ -83,20 +83,20 @@ flowchart TD
 
 ### 3.1 Conversion Manager (Planned)
 
-Conversion manager will coordinate requests and select appropriate engines.
+The conversion manager is responsible for orchestrating conversion requests without performing file conversions itself.
 
-Responsibilities:
+Its responsibilities include:
 
-- Managing batch conversions.
-- Selecting eligible engines depending on format support and availability.
-- Selecting the engine according to user settings.
-- Using Libre office as default engine
-- Coordinating conversions, results, failures
-- Producing batch result
+- Selecting eligible conversion engines based on availability, format compatibility, and user preferences.
+- Coordinating batches of independent conversion requests.
+- Detecting and resolving batch-level output conflicts.
+- Applying the best-effort batch execution policy.
+- Aggregating individual conversion outcomes into a batch result.
+- Reporting engine selection and fallback information to the calling layer.
 
-Manager will flow _best-effort_ execution policy, {Independent failures doesn't crash the process}
+The manager delegates individual conversions to engines through the `ConversionEngine` interface.
 
-LibreOffice is the default preferred conversion engine, users would be able to configure preferred engine
+It must not implement engine-specific conversion logic, manage engine-owned temporary resources, or directly communicate with the user interface.
 
 ### 3.2 Conversion Engines
 
@@ -254,24 +254,32 @@ Temporary conversion output must be verified before being published to its final
 
 Errors occurring during process execution, output publishing, or cleanup must be handled without incorrectly reporting a failed conversion as successful.
 
-## 6. Planned Architecture
+## 6. Implementation Roadmap
 
 This section describes planned components and integrations that are not yet implemented. These designs may evolve during development, provided they respect the established architectural constraints.
 
 ### 6.1 Conversion Manager
 
-The conversion manager will coordinate batches of independent conversion requests.
+The conversion manager has not yet been implemented.
 
-Planned functionality includes:
+The initial implementation will integrate existing conversion engines into a batch orchestration system, following the responsibilities defined in Section 3.1.
 
-- Selecting eligible engines according to availability, format compatibility, and user preferences.
-- Coordinating the execution of individual conversion requests.
-- Detecting and rejecting requests with conflicting output destinations.
-- Continuing unaffected conversions when individual operations fail.
-- Aggregating conversion outcomes into a batch-level result.
-- Reporting engine fallback information to the calling layer.
+**Outstanding implementation work:**
 
-The manager's execution model, including concurrency limits and cancellation behavior, has not yet been finalized.
+- Implement engine discovery and selection.
+- Implement batch request coordination.
+- Implement output collision detection.
+- Implement individual result aggregation.
+- Integrate engine fallback reporting.
+
+**Unresolved design decisions:**
+
+- Sequential versus concurrent batch execution.
+- Maximum number of simultaneous conversions, if concurrency is supported.
+- Cancellation behavior for active and pending conversions.
+- Batch result representation and error classification.
+
+These decisions should be resolved as their implementation requirements become clearer.
 
 ### 6.2 MS Office Engine
 
