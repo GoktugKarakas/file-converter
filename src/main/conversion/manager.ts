@@ -25,16 +25,6 @@ export class ConversionManager {
       return undefined
     }
 
-    const sourceFormat = path.extname(request.inputPath).slice(1).toLowerCase()
-    if (!engine.supports(sourceFormat, request.targetFormat)) {
-      this.logger.warn('engine.unsupported_format', {
-        engineId: preferredEngineId,
-        sourceFormat,
-        targetFormat: request.targetFormat
-      })
-      return undefined
-    }
-
     try {
       if (!(await engine.isAvailable())) {
         this.logger.warn('engine.unavailable', { engineId: preferredEngineId })
