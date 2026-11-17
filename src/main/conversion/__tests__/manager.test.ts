@@ -81,3 +81,20 @@ function makeEngine(
 
   return { engine, calls }
 }
+
+describe('ConversionManager.convertBatch', () => {
+  test('returns an empty array without checking engine availability for an empty batch', async () => {
+    const { logger } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+
+    assert.deepEqual(await manager.convertBatch([]), [])
+    assert.equal(calls.availability, 0)
+    assert.equal(calls.conversions.length, 0)
+  })
+
+
+
+
+  
+})
