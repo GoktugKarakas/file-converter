@@ -57,6 +57,10 @@ export class ConversionManager {
       destinations.add(outputPath)
     }
 
+    if (requests.length === 0) {
+      return results
+    }
+
     const engine = await this.selectEngine(preferredEngineId)
     if (!engine) {
       for (const request of requests) {
@@ -68,5 +72,49 @@ export class ConversionManager {
       }
       return results
     }
+
+    this.logger.info('batch.conversion_started', {
+      engineId: engine.id,
+      total: requests.length
+    })
+
+    for (const request of requests) {
+      try {
+        const sourceFormat = path.extname(request.inputPath).slice(1).toLowerCase()
+        if (!engine.supports(sourceFormat, request.targetFormat)) {
+          throw new Error(`Unsupported conversion: ${sourceFormat} to ${request.targetFormat}`)
+        }
+
+        const result = await engine.convert(request)
+        results.push({
+          request,
+          success: true
+        })
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err)
+
+        this.logger.error('batch.item_failed', {
+          engineId: engine.id,
+          inputPath: request.inputPath,
+          error
+        })
+
+        results.push({
+          success: false,
+          request,
+          error
+        })
+      }
+    }
+
+    const succeeded = results.filter((item) => item.success).length
+
+    this.logger.info('batch.completed', {
+      engineId: engine.id,
+      total: results.length,
+      succeeded,
+      failed: results.length - succeeded
+    })
+    return results
   }
 }
