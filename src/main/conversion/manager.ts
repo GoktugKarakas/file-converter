@@ -1,8 +1,8 @@
 import path from 'node:path'
 
-import type { ConversionRequest } from '../../shared/conversion'
-import type { ConversionEngine } from './types'
 import type { Logger } from '../../shared/logger'
+import type { ConversionEngine } from './types'
+import type { ConversionRequest, BatchItemResult } from '../../shared/conversion'
 
 export class ConversionManager {
   constructor(
