@@ -10,6 +10,7 @@ import { LibreOfficeEngine } from '../adapters/libre-office'
 import type { ConversionRequest } from '../../../shared/conversion'
 import type { Logger } from '../../../shared/logger'
 
+//TODO: Bugfix 2nd and 4th tests
 const fixturePath = fileURLToPath(
   new URL('../adapters/__tests__/fixtures/sample.docx', import.meta.url)
 )
