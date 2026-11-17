@@ -87,8 +87,8 @@ export class ConversionManager {
 
         const result = await engine.convert(request)
         results.push({
-          request,
-          success: true
+          success: true,
+          result
         })
       } catch (err) {
         const error = err instanceof Error ? err.message : String(err)
