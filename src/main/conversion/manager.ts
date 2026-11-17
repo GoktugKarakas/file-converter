@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-// import type { ConversionRequest } from '../../shared/conversion'
+import type { ConversionRequest } from '../../shared/conversion'
 import type { ConversionEngine } from './types'
 import type { Logger } from '../../shared/logger'
 
@@ -39,7 +39,7 @@ export class ConversionManager {
 
   async convertBatch(
     requests: ConversionRequest[],
-    preferredEngineId: 'libre-office'
+    preferredEngineId: string = 'libre-office'
   ): Promise<BatchItemResult[]> {
     const destinations = new Set<string>()
     const results: BatchItemResult[] = []
