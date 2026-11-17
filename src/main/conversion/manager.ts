@@ -57,11 +57,17 @@ export class ConversionManager {
       }
       destinations.add(outputPath)
     }
-    const engine = await this.selectEngine(preferredEngineId)
 
+    const engine = await this.selectEngine(preferredEngineId)
     if (!engine) {
-      // filler
+      for (const request of requests) {
+        results.push({
+          request,
+          success: false,
+          error: `Engine '${preferredEngineId}' is unavailable or not registered`
+        })
+      }
+      return results
     }
-    return results
   }
 }
