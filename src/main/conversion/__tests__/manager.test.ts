@@ -31,3 +31,53 @@ function makeRequest(name: string, outputDirectory = path.resolve('output')): Co
     targetFormat: 'pdf'
   }
 }
+
+function makeEngine(
+  options: {
+    id?: string
+    available?: boolean
+    availabilityError?: Error
+    supports?: (source: string, target: string) => boolean
+    convert?: (request: ConversionRequest) => Promise<ConversionResult>
+  } = {}
+): {
+  engine: ConversionEngine
+  calls: {
+    availability: number
+    supports: Array<{ source: string; target: string }>
+    conversions: ConversionRequest[]
+  }
+} {
+  const calls = {
+    availability: 0,
+    supports: [] as Array<{ source: string; target: string }>,
+    conversions: [] as ConversionRequest[]
+  }
+
+  const engine: ConversionEngine = {
+    id: options.id ?? 'libre-office',
+    async isAvailable() {
+      calls.availability++
+      if (options.availabilityError) throw options.availabilityError
+      return options.available ?? true
+    },
+    supports(source, target) {
+      calls.supports.push({ source, target })
+      return options.supports?.(source, target) ?? (source === 'docx' && target === 'pdf')
+    },
+    async convert(request) {
+      calls.conversions.push(request)
+      if (options.convert) return options.convert(request)
+      return {
+        inputPath: request.inputPath,
+        outputPath: path.join(
+          request.outputDirectory,
+          `${path.parse(request.inputPath).name}.${request.targetFormat}`
+        ),
+        engine: engine.id
+      }
+    }
+  }
+
+  return { engine, calls }
+}
