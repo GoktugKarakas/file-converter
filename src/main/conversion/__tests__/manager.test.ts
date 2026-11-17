@@ -260,4 +260,20 @@ describe('ConversionManager.convertBatch', () => {
     assert.equal(calls.availability, 1)
     assert.equal(calls.conversions.length, 3)
   })
+
+  test('uses the explicitly selected engine rather than the default engine', async () => {
+    const { logger } = makeLogger()
+    const defaultEngine = makeEngine()
+    const alternativeEngine = makeEngine({ id: 'ms-office' })
+    const manager = new ConversionManager([defaultEngine.engine, alternativeEngine.engine], logger)
+
+    const results = await manager.convertBatch([makeRequest('report.docx')], 'ms-office')
+
+    assert.equal(defaultEngine.calls.availability, 0)
+    assert.equal(defaultEngine.calls.conversions.length, 0)
+    assert.equal(alternativeEngine.calls.availability, 1)
+    assert.equal(alternativeEngine.calls.conversions.length, 1)
+    assert.equal(results[0].success, true)
+    if (results[0].success) assert.equal(results[0].result.engine, 'ms-office')
+  })
 })
