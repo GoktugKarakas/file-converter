@@ -24,4 +24,10 @@ function makeLogger(): { logger: Logger; events: LoggedEvent[] } {
   return { logger, events }
 }
 
-
+function makeRequest(name: string, outputDirectory = path.resolve('output')): ConversionRequest {
+  return {
+    inputPath: path.resolve('input', name),
+    outputDirectory,
+    targetFormat: 'pdf'
+  }
+}
