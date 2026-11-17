@@ -184,4 +184,17 @@ describe('ConversionManager.convertBatch', () => {
       { source: 'docx', target: 'pdf' }
     ])
   })
+
+  test('rejects duplicate destinations before selecting an engine or converting files', async () => {
+    const { logger, events } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+    const requests = [makeRequest('report.docx'), makeRequest('report.pptx')]
+
+    await assert.rejects(manager.convertBatch(requests), /Duplicate output destination/)
+
+    assert.equal(calls.availability, 0)
+    assert.equal(calls.conversions.length, 0)
+    assert.ok(events.some(({ event }) => event === 'batch.duplicate_destination'))
+  })
 })
