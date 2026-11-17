@@ -211,4 +211,18 @@ describe('ConversionManager.convertBatch', () => {
     assert.equal(calls.availability, 0)
     assert.equal(calls.conversions.length, 0)
   })
+
+  test('returns failures without converting when the selected engine is unavailable', async () => {
+    const { logger } = makeLogger()
+    const { engine, calls } = makeEngine({ available: false })
+    const manager = new ConversionManager([engine], logger)
+    const requests = [makeRequest('first.docx'), makeRequest('second.docx')]
+
+    const results = await manager.convertBatch(requests)
+
+    assert.equal(results.length, 2)
+    assert.ok(results.every((item) => !item.success))
+    assert.equal(calls.availability, 1)
+    assert.equal(calls.conversions.length, 0)
+  })
 })
