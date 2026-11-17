@@ -225,4 +225,24 @@ describe('ConversionManager.convertBatch', () => {
     assert.equal(calls.availability, 1)
     assert.equal(calls.conversions.length, 0)
   })
+
+  test('logs availability exceptions and returns failed results', async () => {
+    const { logger, events } = makeLogger()
+    const { engine, calls } = makeEngine({ availabilityError: new Error('Discovery failed') })
+    const manager = new ConversionManager([engine], logger)
+
+    const results = await manager.convertBatch([makeRequest('first.docx')])
+
+    assert.equal(results.length, 1)
+    assert.equal(results[0].success, false)
+    assert.equal(calls.conversions.length, 0)
+    assert.ok(
+      events.some(
+        ({ level, event, context }) =>
+          level === 'error' &&
+          event === 'engine.availability_check_failed' &&
+          context?.error === 'Discovery failed'
+      )
+    )
+  })
 })
