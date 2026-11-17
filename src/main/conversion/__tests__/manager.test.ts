@@ -197,4 +197,18 @@ describe('ConversionManager.convertBatch', () => {
     assert.equal(calls.conversions.length, 0)
     assert.ok(events.some(({ event }) => event === 'batch.duplicate_destination'))
   })
+
+  test('returns failures for every request if the preferred engine is not registered', async () => {
+    const { logger } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+    const requests = [makeRequest('first.docx'), makeRequest('second.docx')]
+
+    const results = await manager.convertBatch(requests, 'missing-engine')
+
+    assert.equal(results.length, 2)
+    assert.ok(results.every((item) => !item.success))
+    assert.equal(calls.availability, 0)
+    assert.equal(calls.conversions.length, 0)
+  })
 })
