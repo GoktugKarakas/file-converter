@@ -19,20 +19,34 @@ export class ConversionManager {
     request: ConversionRequest
   ): Promise<ConversionEngine | undefined> {
     const engine = this.getEngine(preferredEngineId)
+
     if (!engine) {
+      this.logger.warn('engine.not_found for_id', { engineId: preferredEngineId })
+      return undefined
+    }
+
+    const sourceFormat = path.extname(request.inputPath).slice(1).toLowerCase()
+    if (!engine.supports(sourceFormat, request.targetFormat)) {
+      this.logger.warn('engine.unsupported_format', {
+        engineId: preferredEngineId,
+        sourceFormat,
+        targetFormat: request.targetFormat
+      })
       return undefined
     }
 
     try {
-      if (
-        (await engine.isAvailable()) &&
-        engine.supports(request.sourceFormat, request.targetFormat)
-      ) {
-        return engine
+      if (!(await engine.isAvailable())) {
+        this.logger.warn('engine.unavailable', { engineId: preferredEngineId })
+        return undefined
       }
     } catch (err) {
-      console.error('Error selecting conversion engine: ', err)
+      this.logger.error('engine.availability_check_failed', {
+        engineId: preferredEngineId,
+        error: err instanceof Error ? err.message : String(err)
+      })
+      return undefined
     }
-    return undefined
+    return engine
   }
 }
