@@ -164,4 +164,24 @@ describe('ConversionManager.convertBatch', () => {
       )
     )
   })
+
+  test('reports unsupported source formats without invoking convert for those requests', async () => {
+    const { logger } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+    const requests = [makeRequest('unsupported.txt'), makeRequest('supported.DOCX')]
+
+    const results = await manager.convertBatch(requests)
+
+    assert.deepEqual(
+      results.map((item) => item.success),
+      [false, true]
+    )
+    assert.match(results[0].success ? '' : results[0].error, /Unsupported conversion/)
+    assert.deepEqual(calls.conversions, [requests[1]])
+    assert.deepEqual(calls.supports, [
+      { source: 'txt', target: 'pdf' },
+      { source: 'docx', target: 'pdf' }
+    ])
+  })
 })
