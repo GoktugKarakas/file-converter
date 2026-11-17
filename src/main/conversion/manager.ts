@@ -5,7 +5,10 @@ import type { ConversionEngine } from './types'
 import type { Logger } from '../../shared/logger'
 
 export class ConversionManager {
-  constructor(private readonly engines: ConversionEngine[]) {}
+  constructor(
+    private readonly engines: ConversionEngine[],
+    private readonly logger: Logger
+  ) {}
 
   private getEngine(id: string): ConversionEngine | undefined {
     return this.engines.find((engine) => engine.id === id)
