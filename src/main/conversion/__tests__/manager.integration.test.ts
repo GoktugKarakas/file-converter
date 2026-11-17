@@ -120,4 +120,23 @@ describe('ConversionManager integration with LibreOffice', () => {
     assert.ok(events.includes('batch.item_failed'))
     assert.ok(events.includes('batch.completed'))
   })
+
+  it('rejects duplicate destination paths before creating any outputs', async () => {
+    const first = await docxRequest('report')
+    const otherInputDirectory = path.join(root, 'other')
+    await mkdir(otherInputDirectory)
+    const secondInputPath = path.join(otherInputDirectory, 'report.docx')
+    await copyFile(fixturePath, secondInputPath)
+    const second: ConversionRequest = {
+      inputPath: secondInputPath,
+      outputDirectory,
+      targetFormat: 'pdf'
+    }
+
+    await assert.rejects(manager.convertBatch([first, second]), /Duplicate output destination/)
+
+    assert.deepEqual(await readdir(outputDirectory), [])
+    assert.ok(events.includes('batch.duplicate_destination'))
+    assert.ok(!events.includes('conversion.started'))
+  })
 })
