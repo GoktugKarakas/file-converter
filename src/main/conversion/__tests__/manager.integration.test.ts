@@ -9,3 +9,23 @@ import { ConversionManager } from '../manager'
 import { LibreOfficeEngine } from '../adapters/libre-office'
 import type { ConversionRequest } from '../../../shared/conversion'
 import type { Logger } from '../../../shared/logger'
+
+const fixturePath = fileURLToPath(
+  new URL('../adapters/__tests__/fixtures/sample.docx', import.meta.url)
+)
+
+const events: string[] = []
+const logger: Logger = {
+  debug: (event) => {
+    events.push(event)
+  },
+  info: (event) => {
+    events.push(event)
+  },
+  warn: (event) => {
+    events.push(event)
+  },
+  error: (event) => {
+    events.push(event)
+  }
+}
