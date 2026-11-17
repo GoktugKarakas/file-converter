@@ -124,4 +124,44 @@ describe('ConversionManager.convertBatch', () => {
       )
     )
   })
+
+  test('continues after a conversion fails and preserves a result for each request', async () => {
+    const { logger, events } = makeLogger()
+    const requests = [makeRequest('first.docx'), makeRequest('bad.docx'), makeRequest('last.docx')]
+    const { engine, calls } = makeEngine({
+      async convert(request) {
+        if (request.inputPath === requests[1].inputPath) {
+          throw new Error('Document is corrupted')
+        }
+        return {
+          inputPath: request.inputPath,
+          outputPath: path.join(
+            request.outputDirectory,
+            `${path.parse(request.inputPath).name}.pdf`
+          ),
+          engine: 'libre-office'
+        }
+      }
+    })
+    const manager = new ConversionManager([engine], logger)
+
+    const results = await manager.convertBatch(requests)
+
+    assert.deepEqual(calls.conversions, requests)
+    assert.deepEqual(
+      results.map((item) => item.success),
+      [true, false, true]
+    )
+    assert.deepEqual(results[1], {
+      success: false,
+      request: requests[1],
+      error: 'Document is corrupted'
+    })
+    assert.ok(
+      events.some(
+        ({ event, context }) =>
+          event === 'batch.completed' && context?.succeeded === 2 && context?.failed === 1
+      )
+    )
+  })
 })
