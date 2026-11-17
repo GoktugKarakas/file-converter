@@ -93,8 +93,35 @@ describe('ConversionManager.convertBatch', () => {
     assert.equal(calls.conversions.length, 0)
   })
 
+  test('returns successful conversion results in request order', async () => {
+    const { logger, events } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+    const requests = [makeRequest('first.docx'), makeRequest('second.docx')]
 
+    const results = await manager.convertBatch(requests)
 
-
-  
+    assert.equal(results.length, 2)
+    assert.deepEqual(calls.conversions, requests)
+    assert.deepEqual(
+      results,
+      requests.map((request) => ({
+        success: true,
+        result: {
+          inputPath: request.inputPath,
+          outputPath: path.join(
+            request.outputDirectory,
+            `${path.parse(request.inputPath).name}.pdf`
+          ),
+          engine: 'libre-office'
+        }
+      }))
+    )
+    assert.ok(
+      events.some(
+        ({ event, context }) =>
+          event === 'batch.completed' && context?.succeeded === 2 && context?.failed === 0
+      )
+    )
+  })
 })
