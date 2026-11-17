@@ -45,11 +45,10 @@ export class ConversionManager {
     const results: BatchItemResult[] = []
 
     for (const request of requests) {
-      const outputPath = path.join(
+      const outputPath = path.resolve(
         request.outputDirectory,
         `${path.parse(request.inputPath).name}.${request.targetFormat}`
       )
-      destinations.add(outputPath)
 
       if (destinations.has(outputPath)) {
         this.logger.warn('batch.duplicate_destination', { outputPath })
