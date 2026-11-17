@@ -29,3 +29,33 @@ const logger: Logger = {
     events.push(event)
   }
 }
+
+describe('ConversionManager integration with LibreOffice', () => {
+  const engine = new LibreOfficeEngine(logger)
+  const manager = new ConversionManager([engine], logger)
+
+  let root: string
+  let outputDirectory: string
+  let available = false
+
+  before(async () => {
+    available = await engine.isAvailable()
+  })
+
+  beforeEach(async () => {
+    root = await mkdtemp(path.join(tmpdir(), 'manager-integration-'))
+    outputDirectory = path.join(root, 'output')
+    await mkdir(outputDirectory)
+    events.length = 0
+  })
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true })
+  })
+
+  async function docxRequest(name: string): Promise<ConversionRequest> {
+    const inputPath = path.join(root, `${name}.docx`)
+    await copyFile(fixturePath, inputPath)
+    return { inputPath, outputDirectory, targetFormat: 'pdf' }
+  }
+})
