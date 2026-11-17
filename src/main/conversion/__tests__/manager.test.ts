@@ -245,4 +245,19 @@ describe('ConversionManager.convertBatch', () => {
       )
     )
   })
+
+  test('checks availability once for a nonempty batch', async () => {
+    const { logger } = makeLogger()
+    const { engine, calls } = makeEngine()
+    const manager = new ConversionManager([engine], logger)
+
+    await manager.convertBatch([
+      makeRequest('first.docx'),
+      makeRequest('second.docx'),
+      makeRequest('third.docx')
+    ])
+
+    assert.equal(calls.availability, 1)
+    assert.equal(calls.conversions.length, 3)
+  })
 })
