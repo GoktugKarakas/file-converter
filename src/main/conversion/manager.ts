@@ -1,6 +1,6 @@
-import path from 'node:path'
+// import path from 'node:path'
 
-import type { ConversionRequest } from '../../shared/conversion'
+// import type { ConversionRequest } from '../../shared/conversion'
 import type { ConversionEngine } from './types'
 import type { Logger } from '../../shared/logger'
 
@@ -14,10 +14,7 @@ export class ConversionManager {
     return this.engines.find((engine) => engine.id === id)
   }
 
-  private async selectEngine(
-    preferredEngineId: string,
-    request: ConversionRequest
-  ): Promise<ConversionEngine | undefined> {
+  private async selectEngine(preferredEngineId: string): Promise<ConversionEngine | undefined> {
     const engine = this.getEngine(preferredEngineId)
 
     if (!engine) {
