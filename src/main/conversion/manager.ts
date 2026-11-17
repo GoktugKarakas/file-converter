@@ -18,7 +18,7 @@ export class ConversionManager {
     const engine = this.getEngine(preferredEngineId)
 
     if (!engine) {
-      this.logger.warn('engine.not_found for_id', { engineId: preferredEngineId })
+      this.logger.warn('engine.not_found', { engineId: preferredEngineId })
       return undefined
     }
 
