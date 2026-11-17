@@ -1,4 +1,4 @@
-// import path from 'node:path'
+import path from 'node:path'
 
 // import type { ConversionRequest } from '../../shared/conversion'
 import type { ConversionEngine } from './types'
@@ -35,5 +35,33 @@ export class ConversionManager {
       return undefined
     }
     return engine
+  }
+
+  async convertBatch(
+    requests: ConversionRequest[],
+    preferredEngineId: 'libre-office'
+  ): Promise<BatchItemResult[]> {
+    const destinations = new Set<string>()
+    const results: BatchItemResult[] = []
+
+    for (const request of requests) {
+      const outputPath = path.join(
+        request.outputDirectory,
+        `${path.parse(request.inputPath).name}.${request.targetFormat}`
+      )
+      destinations.add(outputPath)
+
+      if (destinations.has(outputPath)) {
+        this.logger.warn('batch.duplicate_destination', { outputPath })
+        throw new Error(`Duplicate output destination: ${outputPath}`)
+      }
+      destinations.add(outputPath)
+    }
+    const engine = await this.selectEngine(preferredEngineId)
+
+    if (!engine) {
+      // filler
+    }
+    return results
   }
 }
