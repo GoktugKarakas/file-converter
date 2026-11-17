@@ -58,4 +58,35 @@ describe('ConversionManager integration with LibreOffice', () => {
     await copyFile(fixturePath, inputPath)
     return { inputPath, outputDirectory, targetFormat: 'pdf' }
   }
+
+  it('converts two documents and returns usable result metadata', async (t) => {
+    if (!available) return t.skip('LibreOffice not installed or discoverable')
+
+    const first = await docxRequest('first')
+    const second = await docxRequest('second')
+    const results = await manager.convertBatch([first, second])
+
+    assert.equal(results.length, 2)
+    assert.ok(results.every((item) => item.success))
+
+    for (const [index, request] of [first, second].entries()) {
+      const item = results[index]
+      assert.equal(item.success, true)
+      if (!item.success) continue // Narrow the discriminated union for TypeScript.
+
+      const expectedOutput = path.join(outputDirectory, `${path.parse(request.inputPath).name}.pdf`)
+      assert.deepEqual(item.result, {
+        inputPath: request.inputPath,
+        outputPath: expectedOutput,
+        engine: 'libre-office'
+      })
+
+      const bytes = await readFile(expectedOutput)
+      assert.ok(bytes.length > 100)
+      assert.equal(bytes.subarray(0, 5).toString('ascii'), '%PDF-')
+    }
+
+    assert.deepEqual((await readdir(outputDirectory)).sort(), ['first.pdf', 'second.pdf'])
+    assert.ok(events.includes('batch.completed'))
+  })
 })
