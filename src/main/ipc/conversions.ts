@@ -22,3 +22,14 @@ function isConversionRequest(value: unknown): value is ConversionRequest {
     isSupportedFormat(request.targetFormat)
   )
 }
+
+export function registerConversionHandlers(): void {
+  const manager = new ConversionManager([new LibreOfficeEngine(logger)], logger)
+
+  ipcMain.handle('conversions:batch', async (_event, requests: unknown[]) => {
+    if (!Array.isArray(requests) || requests.length > 100 || !requests.every(isConversionRequest)) {
+      throw new Error('Invalid conversion batch requests')
+    }
+    return manager.convertBatch(requests)
+  })
+}
