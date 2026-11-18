@@ -1,8 +1,10 @@
-import { app, shell, BrowserWindow } from 'electron' // Note : add ipcMain back inside
+import { app, BrowserWindow } from 'electron' // Note : add ipcMain back inside
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerFileHandlers } from './ipc/files'
 import icon from '../../resources/icon.png?asset'
+
+import { registerConversionHandlers } from './ipc/conversions'
 
 function createWindow(): void {
   // Create the browser window.
@@ -22,8 +24,9 @@ function createWindow(): void {
     mainWindow.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+  // TODO: When implementing Url to mp4/mp3 conversions, refactor this function
+  // implement an allowlist of urls
+  mainWindow.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' }
   })
 
@@ -36,21 +39,16 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.file-converter.app')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  // ipcMain.on('ping', () => console.log('pong'))
-
   registerFileHandlers()
+  registerConversionHandlers()
+
   createWindow()
 
   app.on('activate', function () {
