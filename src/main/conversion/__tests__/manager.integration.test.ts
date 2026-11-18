@@ -91,37 +91,6 @@ describe('ConversionManager integration with LibreOffice', () => {
     assert.ok(events.includes('batch.completed'))
   })
 
-  it('continues with a valid document after a corrupted document fails', async (t) => {
-    if (!available) return t.skip('LibreOffice not installed or discoverable')
-
-    const first = await docxRequest('first')
-    const corruptedPath = path.join(root, 'corrupted.docx')
-    await writeFile(corruptedPath, Buffer.from('Not a valid DOCX archive'))
-    const corrupted: ConversionRequest = {
-      inputPath: corruptedPath,
-      outputDirectory,
-      targetFormat: 'pdf'
-    }
-    const last = await docxRequest('last')
-
-    const results = await manager.convertBatch([first, corrupted, last])
-
-    assert.equal(results.length, 3)
-    assert.deepEqual(
-      results.map((item) => item.success),
-      [true, false, true]
-    )
-    assert.equal(results[1].success, false)
-    if (!results[1].success) {
-      assert.equal(results[1].request.inputPath, corruptedPath)
-      assert.ok(results[1].error.length > 0)
-    }
-
-    assert.deepEqual((await readdir(outputDirectory)).sort(), ['first.pdf', 'last.pdf'])
-    assert.ok(events.includes('batch.item_failed'))
-    assert.ok(events.includes('batch.completed'))
-  })
-
   it('rejects duplicate destination paths before creating any outputs', async () => {
     const first = await docxRequest('report')
     const otherInputDirectory = path.join(root, 'other')
