@@ -159,7 +159,7 @@ export default function FileSelector(): React.JSX.Element {
                     {item.success ? (
                       <p className="break-all text-emerald-300">✓ {item.result.outputPath}</p>
                     ) : (
-                      <p className="break-words text-red-300">✕ {String(item.error)}</p>
+                      <p className="wrap-break-word text-red-300">✕ {String(item.error)}</p>
                     )}
                   </div>
                 ))}
